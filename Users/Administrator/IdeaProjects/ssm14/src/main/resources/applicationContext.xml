@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xmlns:aop="http://www.springframework.org/schema/aop"
+		xmlns:tx="http://www.springframework.org/schema/tx"
+		xmlns:p="http://www.springframework.org/schema/p"
+		xmlns:context="http://www.springframework.org/schema/context"
+		xsi:schemaLocation="
+			http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+			http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.5.xsd
+			http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.5.xsd
+			http://www.springframework.org/schema/context
+    		http://www.springframework.org/schema/context/spring-context-3.2.xsd"
+    		>
+     <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+    	<property name="location" value="classpath:database.properties"></property>
+    </bean>
+	 <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+        <property name="driverClassName" value="com.mysql.jdbc.Driver" />
+        <property name="url" value="jdbc:mysql://127.0.0.1:3306/smbms?
+                        useUnicode=true&amp;characterEncoding=utf-8" />
+        <property name="username" value="root" />
+        <property name="password" value="root" />
+        
+        <property name="initialSize" value="${initialSize}"/>
+		<property name="maxActive" value="${maxActive}"/>
+		<property name="maxIdle" value="${maxIdle}"/>
+		<property name="minIdle" value="${minIdle}"/>
+		<property name="maxWait" value="${maxWait}"/>
+		<property name="removeAbandoned" value="${removeAbandoned}"/>
+		<property name="removeAbandonedTimeout" value="${removeAbandonedTimeout}"/>
+		<property name= "testWhileIdle" value="${testWhileIdle}"/>
+		<property name= "validationQuery" value="${validationQuery}"/>
+		<property name= "testOnBorrow" value="${testOnBorrow}"/>
+		<property name= "testOnReturn" value="${testOnReturn}"/>
+		<property name= "timeBetweenEvictionRunsMillis" value="${timeBetweenEvictionRunsMillis}"/>
+		<property name= "numTestsPerEvictionRun" value="${numTestsPerEvictionRun}"/>
+    </bean>
+
+    <!-- 配置SqlSessionFactoryBean -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <!-- 引用数据源组件 -->
+        <property name="dataSource" ref="dataSource" />
+        <property name="configLocation" value="classpath:mybatis.xml" />
+        <property name="typeAliasesPackage" value="com.lcg.entity" />
+        <!-- 引用MyBatis配置文件中的配置 -->
+        <property name="mapperLocations">
+        	<list>
+        		<value>classpath:com/lcg/mapper/*.xml</value>
+        	</list>
+        </property>
+    </bean>
+    <!-- dao -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />
+        <property name="basePackage" value="com.lcg.dao" />
+    </bean>
+    <!-- 开启注解  -->
+    <context:component-scan base-package="com.lcg.service" />
+    
+    <!-- 事务 -->
+    <bean id="tx" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"></property>
+    </bean>
+    <tx:advice id="txAdvice" transaction-manager="tx">
+        <tx:attributes>
+            <tx:method name="find*" propagation="SUPPORTS" />
+            <tx:method name="add*" propagation="REQUIRED" />
+            <tx:method name="del*" propagation="REQUIRED" />
+            <tx:method name="update*" propagation="REQUIRED" />
+            <tx:method name="*" propagation="REQUIRED" />
+        </tx:attributes>
+    </tx:advice>
+    <!-- 定义切面 -->
+    <aop:config>
+        <aop:pointcut id="serviceMethod"
+            expression="execution(* com.lcg.service.impl..*.*(..))" />
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="serviceMethod" />
+    </aop:config>
+</beans>

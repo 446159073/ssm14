@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>  
+<!DOCTYPE mapper  
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">  
+  
+<mapper namespace="com.lcg.dao.DevUserDao">
+	<insert id="save" parameterType="SmbmsUser">
+		INSERT INTO 
+			`smbms`.`smbms_user` 
+				(`id`, `userCode`, `userName`, 
+				`userPassword`, `gender`, `birthday`,
+				 `phone`, `address`, `userRole`, 
+				 `createdBy`, `creationDate`, `modifyBy`, 
+				 `modifyDate`, `idPicPath`, `workPicPath`
+				 ) 
+		VALUES (default, #{userCode}, #{userName}, #{userPassword}, #{gender}, #{birthday}, 
+			#{phone}, #{address}, #{userRole}, #{createdBy}, #{creationDate}, #{modifyBy}, 
+			#{modifyDate}, #{idPicPath}, #{workPicPath})
+	</insert>
+	<update id="update" parameterType="SmbmsUser">
+		UPDATE 
+			`smbms`.`smbms_user` 
+		<trim prefix="set"  suffixOverrides=",">
+			<if test="userCode != null">`userCode`=#{userCode}, </if>
+			<if test="userName != null">`userName`=#{userName},  </if>
+			<if test="userPassword != null">`userPassword`=#{userPassword},  </if>
+			<if test="gender != null">`gender`=#{gender},  </if>
+			<if test="birthday != null">`birthday`=#{birthday},  </if>
+			<if test="phone != null">`phone`=#{phone},  </if>
+			<if test="address != null">`address`=#{address},  </if>
+			<if test="userRole != null">`userRole`=#{userRole},  </if>
+			<if test="createdBy != null">`createdBy`=#{createdBy},  </if>
+			<if test="creationDate != null">`creationDate`=#{creationDate},  </if>
+			<if test="modifyBy != null">`modifyBy`=#{modifyBy}, </if>
+			<if test="modifyDate != null">`modifyDate`=#{modifyDate},  </if>
+			<if test="idPicPath != null">`idPicPath`=#{idPicPath},  </if>
+			<if test="workPicPath != null">`workPicPath`=#{workPicPath},  </if>
+		</trim>
+		WHERE `id`=#{id};
+	</update>
+	<delete id="delete" parameterType="SmbmsUser">
+		delete from `smbms`.`smbms_user` where id = #{id}
+	</delete>
+    <select id="find" resultMap="resultMapSmbmsUser" parameterType="SmbmsUser">  
+        select 
+        	su.*,sr.id rid,sr.roleCode,sr.roleName,
+        	sr.createdBy createdBy1,sr.creationDate creationDate1,
+        	sr.modifyBy modifyBy1,sr.modifyDate modifyDate1 
+        from 
+        	smbms_user su join smbms_role sr on su.userRole = sr.id
+        <where>
+        	<if test="user.userCode != null">and userCode = #{user.userCode}</if>
+        	<if test="user.userName != null">and userName like '%${user.userName}%'</if>
+        	<if test="user.userPassword != null">and userPassword = #{user.userPassword}</if>
+        </where>
+        order by creationDate desc
+        limit #{firstResult},#{maxResults}
+       
+    </select>
+     <select id="get" resultMap="resultMapSmbmsUser" parameterType="int">  
+        select 
+        	su.*,sr.id rid,sr.roleCode,sr.roleName,
+        	sr.createdBy createdBy1,sr.creationDate creationDate1,
+        	sr.modifyBy modifyBy1,sr.modifyDate modifyDate1 
+        from 
+        	smbms_user su join smbms_role sr on su.userRole = sr.id
+        where 
+        	su.id = #{id}
+    </select>
+     <select id="getTotalCount" resultType="int" parameterType="SmbmsUser">  
+        select 
+        	count(*)
+        from 
+        	smbms_user su join smbms_role sr on su.userRole = sr.id
+        <where>
+        	<if test="id != null"> and id = #{id}</if>
+        	<if test="userName != null"> and userName like concat('%',#{userName},'%')</if>
+        	<if test="userRole != null"> and userRole = #{userRole}</if>
+        </where>
+    </select>
+    <select id="login" resultMap="resultMapSmbmsUser" parameterType="SmbmsUser">  
+        select 
+        	su.*,sr.id rid,sr.roleCode,sr.roleName,
+        	sr.createdBy createdBy1,sr.creationDate creationDate1,
+        	sr.modifyBy modifyBy1,sr.modifyDate modifyDate1 
+        from 
+        	smbms_user su join smbms_role sr on su.userRole = sr.id
+        where 
+        	userCode = #{userCode} and userPassword = #{userPassword}
+    </select>
+    <select id="findByUserRole" resultType="SmbmsUser" parameterType="int">  
+        select * from smbms_user where userRole = #{userRole}
+    </select>
+    
+     <select id="findByUserRoles1" resultType="SmbmsUser" parameterType="int">  
+        select 
+        	* 
+        from 
+        	smbms_user 
+        where 
+        	userRole in 
+        		<foreach collection="array" item="userRole" open="(" separator="," close=")">
+        			#{userRole}
+        		</foreach>
+    </select>
+    
+     <select id="findByUserRoles2" resultType="SmbmsUser" parameterType="int">  
+        select 
+        	* 
+        from 
+        	smbms_user 
+        where 
+        	userRole in 
+        		<foreach collection="list" item="userRole" open="(" separator="," close=")">
+        			#{userRole}
+        		</foreach>
+    </select>
+     <select id="findByUserRoles3" resultType="SmbmsUser" parameterType="int">  
+         select 
+        	* 
+        from 
+        	smbms_user 
+        where 
+        	userRole in 
+        		<foreach collection="userRoles" item="userRole" open="(" separator="," close=")">
+        			#{userRole}
+        		</foreach>
+    </select>
+    
+     <select id="findByUserRoleAndUserName" resultMap="resultMapSmbmsUser">  
+        select 
+        	su.*,sr.roleName userRoleName 
+        from 
+        	smbms_user su join smbms_role sr on su.userRole = sr.id
+        <!-- where 1 = 1
+        	<if test="userRole != null"> and su.userRole = #{userRole}</if>
+        	<if test="userName != null"> and su.userName = #{userName}</if> -->
+        <!-- <where>
+        	<if test="userRole != null"> and su.userRole = #{userRole}</if>
+        	<if test="userName != null"> and su.userName like concat('%',#{userName},'%') </if>
+        	<if test="userName != null"> and su.userName like '%#{userName}%' </if> X
+        	<if test="userName != null"> and su.userName like '%${userName}%' </if>
+        </where> -->
+        
+        <trim prefix="where" prefixOverrides="and|or">
+        	<if test="userRole != null"> and su.userRole = #{userRole}</if>
+        	<if test="userName != null"> and su.userName like '%${userName}%' </if>
+        </trim>
+    </select>
+    
+    <select id="findByUserRoleAndUserName2" resultMap="resultMapSmbmsUser">  
+        select 
+        	su.*,sr.roleName userRoleName 
+        from 
+        	smbms_user su join smbms_role sr on su.userRole = sr.id
+        <trim prefix="where" prefixOverrides="and|or">
+        	 <choose>
+	        	<when test="userRole != null"> and su.userRole = #{userRole}</when>
+	        	<when test="userName != null"> and su.userName like '%${userName}%'</when>
+	        </choose>
+        </trim>
+       
+    </select>
+    <resultMap type="SmbmsUser" id="resultMapSmbmsUser">
+    	<id property="id" column="id" />
+    	<result property="roleName" column="userRoleName" />
+    	<association property="role" column="userRole" javaType="SmbmsRole">
+    		<id property="id" column="rid"  />
+    		<result property="roleCode" column="roleCode"/>
+    		<result property="roleName" column="roleName"/>
+    		<result property="createdBy" column="createdBy1"/>
+    		<result property="creationDate" column="creationDate1"/>
+    		<result property="modifyBy" column="modifyBy1"/>
+    		<result property="modifyDate" column="modifyDate1"/>
+    	</association>
+    </resultMap>
+</mapper>
